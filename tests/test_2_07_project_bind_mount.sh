@@ -18,8 +18,22 @@ pass() {
   echo "PASS: $1"
 }
 
+# Postgres initializes its data directory as its own container user
+# (uid 70, mode 0700), so on native Linux (unlike Docker Desktop's mac
+# volume translation) the host user running this script has no permission
+# to read or remove it directly. Route those operations through a
+# throwaway root container instead.
+clean_host_dir() {
+  docker run --rm -v "$TARGET_DIR:/target" alpine rm -rf "/target/${host_dir#./}" >/dev/null 2>&1
+}
+
+host_dir_has_file() {
+  docker run --rm -v "$TARGET_DIR:/target" alpine test -f "/target/${host_dir#./}/$1"
+}
+
 cleanup() {
   (cd "$TARGET_DIR" && docker compose down >/dev/null 2>&1)
+  [ -n "${host_dir:-}" ] && clean_host_dir
 }
 trap cleanup EXIT
 
@@ -47,6 +61,12 @@ if grep -qE "^volumes:" "$COMPOSE_FILE"; then
 fi
 pass "docker-compose.yaml does not declare a named volume for the database"
 
+# Start from a clean slate: don't assume anything about whether the bind
+# mount directory already exists on the host, or what's in it left over
+# from a previous run -- otherwise a stale PG_VERSION file could make the
+# persistence check below pass without the mount actually working.
+clean_host_dir
+
 (cd "$TARGET_DIR" && docker compose up -d --build) || fail "docker compose up failed"
 pass "docker compose up succeeded"
 
@@ -62,17 +82,16 @@ done
 $postgres_ok || fail "backend never reported a working Postgres connection"
 pass "backend has a working Postgres connection"
 
-host_path="$TARGET_DIR/${host_dir#./}"
 data_appeared=false
 for _ in $(seq 1 15); do
-  if [ -f "$host_path/PG_VERSION" ]; then
+  if host_dir_has_file PG_VERSION; then
     data_appeared=true
     break
   fi
   sleep 1
 done
-$data_appeared || fail "no Postgres data files appeared on the host at $host_path -- is the bind mount actually working?"
-pass "Postgres data files are visible on the host filesystem at $host_path"
+$data_appeared || fail "no Postgres data files appeared on the host at $TARGET_DIR/${host_dir#./} -- is the bind mount actually working?"
+pass "Postgres data files are visible on the host filesystem at $TARGET_DIR/${host_dir#./}"
 
 unique_body="bind-mount-test-$$-$RANDOM"
 curl -s --max-time 5 -X POST "$APP_URL/api/messages" \
