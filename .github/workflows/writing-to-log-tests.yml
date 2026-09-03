@@ -1,0 +1,17 @@
+name: writing_to_log tests
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run writing_to_log tests
+        run: bash tests/test_2_01_writing_to_log.sh
