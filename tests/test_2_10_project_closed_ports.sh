@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Verifies exercise 2.10: with the reverse proxy in place, nothing but
 # Nginx is directly reachable from the host. frontend, backend, redis and
-# db must not publish ports to the host.
+# db must not publish ports to the host. Readiness is checked by actually
+# pressing the "backend" exercise button in the frontend with a real
+# browser (Playwright), instead of hitting the backend API directly.
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET_DIR="$REPO_ROOT/project"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yaml"
+PLAYWRIGHT_DIR="$REPO_ROOT/tests/playwright"
 APP_URL="http://localhost:8000"
 
 fail() {
@@ -29,18 +32,28 @@ pass "docker-compose.yaml exists"
 (cd "$TARGET_DIR" && docker compose up -d --build) || fail "docker compose up failed"
 pass "docker compose up succeeded"
 
-# Wait for the app to be fully up before checking that only Nginx answers.
-app_ok=false
+# Wait for the app to be fully up before checking that only Nginx answers,
+# by actually pressing the "backend" exercise button in the frontend.
+frontend_ok=false
 for _ in $(seq 1 60); do
-  response=$(curl -s --max-time 2 "$APP_URL/api/ping" 2>/dev/null)
-  if [ "$response" = "pong" ]; then
-    app_ok=true
+  if curl -s --max-time 2 "$APP_URL" 2>/dev/null | grep -qi "html"; then
+    frontend_ok=true
     break
   fi
   sleep 2
 done
-$app_ok || fail "app never became ready at $APP_URL"
-pass "app is reachable through Nginx at $APP_URL"
+$frontend_ok || fail "frontend was not reachable at $APP_URL"
+pass "frontend is reachable at $APP_URL"
+
+command -v node >/dev/null 2>&1 || fail "node is required to run the browser check in tests/playwright"
+(cd "$PLAYWRIGHT_DIR" && npm install --no-audit --no-fund >/dev/null 2>&1) \
+  || fail "npm install failed in tests/playwright"
+(cd "$PLAYWRIGHT_DIR" && npx --yes playwright install --with-deps chromium >/dev/null 2>&1) \
+  || fail "playwright chromium install failed"
+
+node "$PLAYWRIGHT_DIR/check-exercise-button.mjs" "$APP_URL" backend \
+  || fail "pressing the \"backend\" button in the frontend did not report success through the proxy"
+pass "pressing the \"backend\" button in the frontend reported success through the proxy -- app is ready"
 
 for service in backend frontend redis db; do
   container_id=$(cd "$TARGET_DIR" && docker compose ps -q "$service")
