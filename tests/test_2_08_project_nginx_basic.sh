@@ -11,7 +11,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET_DIR="$REPO_ROOT/project"
+TARGET_DIR="$REPO_ROOT/2_03-10"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yaml"
 APP_URL="http://localhost:8000"
 
@@ -29,7 +29,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[ -f "$COMPOSE_FILE" ] || fail "project/docker-compose.yaml not found"
+[ -f "$COMPOSE_FILE" ] || fail "2_03-10/docker-compose.yaml not found"
 pass "docker-compose.yaml exists"
 
 grep -qi "nginx" "$COMPOSE_FILE" || fail "docker-compose.yaml does not define an nginx service"

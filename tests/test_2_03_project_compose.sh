@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies exercise 2.3: project/docker-compose.yaml brings up the example
+# Verifies exercise 2.3: 2_03-10/docker-compose.yaml brings up the example
 # frontend and backend together, and the frontend can reach the backend
 # through it. This is checked by actually pressing the "backend" exercise
 # button in the frontend with a real browser (Playwright) and waiting for
@@ -7,7 +7,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET_DIR="$REPO_ROOT/project"
+TARGET_DIR="$REPO_ROOT/2_03-10"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yaml"
 PLAYWRIGHT_DIR="$REPO_ROOT/tests/playwright"
 
@@ -30,7 +30,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[ -f "$COMPOSE_FILE" ] || fail "project/docker-compose.yaml not found"
+[ -f "$COMPOSE_FILE" ] || fail "2_03-10/docker-compose.yaml not found"
 pass "docker-compose.yaml exists"
 
 # Once nginx is in place (exercise 2.9), the frontend/backend/redis/postgres
