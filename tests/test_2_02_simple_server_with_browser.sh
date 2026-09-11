@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Verifies that simple_server_with_browser/docker-compose.yaml starts
+# Verifies that 2_02/docker-compose.yaml starts
 # devopsdockeruh/simple-web-service and exposes it on the host so it can be
 # reached with a browser.
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET_DIR="$REPO_ROOT/simple_server_with_browser"
+TARGET_DIR="$REPO_ROOT/2_02"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yaml"
 
 fail() {
@@ -22,7 +22,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[ -f "$COMPOSE_FILE" ] || fail "simple_server_with_browser/docker-compose.yaml not found"
+[ -f "$COMPOSE_FILE" ] || fail "2_02/docker-compose.yaml not found"
 pass "docker-compose.yaml exists"
 
 grep -q "devopsdockeruh/simple-web-service" "$COMPOSE_FILE" \

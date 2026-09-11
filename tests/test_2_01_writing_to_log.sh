@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Verifies that writing_to_log/docker-compose.yaml starts
+# Verifies that 2_01/docker-compose.yaml starts
 # devopsdockeruh/simple-web-service and that the container's logs end up
-# in writing_to_log/log.txt on the host filesystem.
+# in 2_01/log.txt on the host filesystem.
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET_DIR="$REPO_ROOT/writing_to_log"
+TARGET_DIR="$REPO_ROOT/2_01"
 COMPOSE_FILE="$TARGET_DIR/docker-compose.yaml"
 LOG_FILE="$TARGET_DIR/log.txt"
 
@@ -23,7 +23,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[ -f "$COMPOSE_FILE" ] || fail "writing_to_log/docker-compose.yaml not found"
+[ -f "$COMPOSE_FILE" ] || fail "2_01/docker-compose.yaml not found"
 pass "docker-compose.yaml exists"
 
 grep -q "devopsdockeruh/simple-web-service" "$COMPOSE_FILE" \
