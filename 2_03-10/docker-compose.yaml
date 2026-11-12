@@ -1,0 +1,9 @@
+services:
+ frontend:
+  image: maryam626/frontend
+  ports:
+   - 5001:5001
+ backend:
+  image: maryam626/backend
+  ports:
+   - 8080:8080
